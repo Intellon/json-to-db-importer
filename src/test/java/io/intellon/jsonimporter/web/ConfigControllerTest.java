@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -90,6 +91,47 @@ class ConfigControllerTest {
                         .param("password", "wrong"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Login failed for user")));
+    }
+
+    @Test
+    void failedRetestAfterSuccessClearsConnectionTestedState() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mvc.perform(post("/config/test").session(session)
+                        .param("dbType", "MSSQL")
+                        .param("host", "dbhost")
+                        .param("port", "1433")
+                        .param("database", "mydb")
+                        .param("username", "sa")
+                        .param("password", "secret"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Verbindung erfolgreich")));
+
+        doThrow(new SQLException("Login failed for user 'sa'"))
+                .when(dialect).testConnection(any());
+
+        mvc.perform(post("/config/test").session(session)
+                        .param("dbType", "MSSQL")
+                        .param("host", "dbhost")
+                        .param("port", "1433")
+                        .param("database", "mydb")
+                        .param("username", "sa")
+                        .param("password", "wrong"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Login failed for user")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("Weiter zu Schritt 2"))));
+
+        mvc.perform(get("/files").session(session)).andExpect(redirectedUrl("/config"));
+    }
+
+    @Test
+    void configPageIgnoresCorruptPersistedDbTypeAndKeepsDefault() throws Exception {
+        when(persistence.load()).thenReturn(Optional.of(
+                new AppSettings("POSTGRES", "h", 5432, "d", "u", null)));
+
+        mvc.perform(get("/config"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("name=\"host\"")));
     }
 
     @Test

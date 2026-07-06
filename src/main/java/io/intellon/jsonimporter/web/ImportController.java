@@ -1,6 +1,7 @@
 package io.intellon.jsonimporter.web;
 
 import io.intellon.jsonimporter.model.ImportItem;
+import io.intellon.jsonimporter.model.ImportResult;
 import io.intellon.jsonimporter.model.ImportStatus;
 import io.intellon.jsonimporter.model.ScannedFile;
 import io.intellon.jsonimporter.service.ImportService;
@@ -77,7 +78,30 @@ public class ImportController {
             return "files";
         }
 
-        wizardState.setResults(importService.run(wizardState.getDbConfig(), items));
+        List<ImportResult> serviceResults = importService.run(wizardState.getDbConfig(), items);
+
+        // Ergebnisliste über ALLE gescannten Files aufbauen (Spec §4 Schritt 3): Zeilen, die am
+        // Import teilgenommen haben, bekommen das Service-Ergebnis; abgewählte importierbare Zeilen
+        // und nicht importierbare Zeilen werden als SKIPPED synthetisiert, damit auf /result keine
+        // Datei stillschweigend verschwindet.
+        List<ImportResult> merged = new ArrayList<>(files.size());
+        int servicePos = 0;
+        for (int i = 0; i < files.size(); i++) {
+            if (servicePos < itemIndexes.size() && itemIndexes.get(servicePos) == i) {
+                merged.add(serviceResults.get(servicePos));
+                servicePos++;
+                continue;
+            }
+            ScannedFile f = files.get(i);
+            String key = enteredKeys.getOrDefault(i, f.defaultKey()).trim();
+            if (!f.importable()) {
+                String msg = f.readError() ? "Lesefehler" : "ungültiges JSON";
+                merged.add(new ImportResult(f.relativePath(), f.targetTable(), key, ImportStatus.SKIPPED, msg));
+            } else {
+                merged.add(new ImportResult(f.relativePath(), f.targetTable(), key, ImportStatus.SKIPPED, "abgewählt"));
+            }
+        }
+        wizardState.setResults(merged);
         return "redirect:/result";
     }
 

@@ -44,7 +44,11 @@ public class ConfigController {
         } else {
             persistence.load().ifPresent(settings -> {
                 if (settings.dbType() != null) {
-                    form.setDbType(DbType.valueOf(settings.dbType()));
+                    try {
+                        form.setDbType(DbType.valueOf(settings.dbType()));
+                    } catch (IllegalArgumentException e) {
+                        // Spec §8: korrupte/unbekannte Werte werden ignoriert, Default bleibt bestehen.
+                    }
                 }
                 form.setHost(settings.host());
                 if (settings.port() != null) {
@@ -79,6 +83,8 @@ public class ConfigController {
             model.addAttribute("successMessage", "Verbindung erfolgreich hergestellt.");
             model.addAttribute("connectionTested", true);
         } catch (Exception e) {
+            wizardState.setConnectionTested(false);
+            model.addAttribute("connectionTested", false);
             model.addAttribute("errorMessage",
                     "Verbindung fehlgeschlagen: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
         }

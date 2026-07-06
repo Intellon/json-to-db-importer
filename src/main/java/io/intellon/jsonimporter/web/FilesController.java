@@ -45,8 +45,14 @@ public class FilesController {
             return "redirect:/config";
         }
         model.addAttribute("folder", folder);
+        if (folder == null || folder.isBlank()) {
+            model.addAttribute("errorMessage", "Ordnerpfad darf nicht leer sein");
+            model.addAttribute("files", wizardState.getScannedFiles());
+            return "files";
+        }
         try {
             wizardState.setScannedFiles(scanService.scan(Path.of(folder.trim())));
+            wizardState.setResults(null);
             wizardState.setFolder(folder);
             persistence.load().ifPresentOrElse(
                     s -> persistence.save(new AppSettings(s.dbType(), s.host(), s.port(), s.database(), s.username(), folder)),

@@ -92,4 +92,11 @@ class FilesControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Ordner existiert nicht")));
     }
+
+    @Test
+    void blankFolderShowsValidationMessageAndDoesNotScan() throws Exception {
+        mvc.perform(post("/files/scan").session(session).param("folder", "  "))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Ordnerpfad darf nicht leer sein")));
+    }
 }
