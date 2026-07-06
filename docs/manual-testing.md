@@ -5,18 +5,13 @@ Kompletter Durchlauf gegen eine lokale Wegwerf-Datenbank (MSSQL im Docker-Contai
 ## 1. Lokale MSSQL-Datenbank starten
 
 ```bash
-docker run -d --name mssql-local \
-  -e ACCEPT_EULA=Y \
-  -e MSSQL_SA_PASSWORD='Test!Passw0rd' \
-  -p 1433:1433 \
-  mcr.microsoft.com/mssql/server:2022-latest
+docker run -d --name mssql-local -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD='Test!Passw0rd' -p 1433:1433 mcr.microsoft.com/mssql/server:2022-latest
 ```
 
 Ein paar Sekunden warten, dann eine Test-Datenbank anlegen:
 
 ```bash
-docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd' -C \
-  -Q "CREATE DATABASE importer_test"
+docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd' -C -Q "CREATE DATABASE importer_test"
 ```
 
 > Das Passwort muss der MSSQL-Richtlinie genügen (min. 8 Zeichen, Groß-/Kleinbuchstaben, Ziffer, Sonderzeichen) — sonst beendet sich der Container sofort. Prüfen mit `docker logs mssql-local`.
@@ -66,8 +61,7 @@ Browser: **http://127.0.0.1:8080**
 ## 5. Ergebnis in der Datenbank prüfen
 
 ```bash
-docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd' -C \
-  -d importer_test -Q "SELECT file_key, LEFT(content, 60) AS preview, imported_at FROM [kunden]"
+docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd' -C -d importer_test -Q "SELECT file_key, LEFT(content, 60) AS preview, imported_at FROM [kunden]"
 ```
 
 Erwartung: zwei Zeilen (`adressen`, `vertraege`) mit dem unveränderten JSON als Inhalt. Alternativ per SSMS/Azure Data Studio auf `localhost,1433` verbinden.
