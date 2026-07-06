@@ -24,6 +24,8 @@ mvn test              # Unit-Tests
 mvn verify -Pit       # zusätzlich Integrationstests gegen echten MSSQL-Container (braucht Docker)
 ```
 
+Manuell gegen eine lokale Wegwerf-DB testen: siehe [Anleitung](docs/manual-testing.md).
+
 ## Bedienung
 
 Siehe [Benutzerhandbuch](docs/user-manual.md). Kurzfassung: 3-Schritte-Wizard — Verbindung konfigurieren → Ordner scannen & Keys vergeben → Import ausführen.
