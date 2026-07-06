@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON-Importer · Ergebnis</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<main>
+    <h1>JSON → DB Importer</h1>
+    <nav th:replace="~{fragments :: steps(3)}"></nav>
+
+    <p>
+        <span class="badge ok" th:text="${countInserted} + ' neu angelegt'"></span>
+        <span class="badge ok" th:text="${countUpdated} + ' aktualisiert'"></span>
+        <span class="badge warn" th:text="${countSkipped} + ' übersprungen'"></span>
+        <span class="badge err" th:text="${countError} + ' Fehler'"></span>
+    </p>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Datei</th>
+            <th>Zieltabelle</th>
+            <th>Key</th>
+            <th>Status</th>
+            <th>Details</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${results}" th:classappend="${r.status().name() == 'ERROR'} ? 'row-error'">
+            <td th:text="${r.relativePath()}"></td>
+            <td th:text="${r.targetTable()}"></td>
+            <td th:text="${r.fileKey()}"></td>
+            <td>
+                <span class="badge ok" th:if="${r.status().name() == 'INSERTED'}">neu angelegt</span>
+                <span class="badge ok" th:if="${r.status().name() == 'UPDATED'}">aktualisiert</span>
+                <span class="badge warn" th:if="${r.status().name() == 'SKIPPED'}">übersprungen</span>
+                <span class="badge err" th:if="${r.status().name() == 'ERROR'}">Fehler</span>
+            </td>
+            <td th:text="${r.message()}"></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div class="actions">
+        <a class="button" th:href="@{/files}">← Zurück zu Dateien &amp; Keys</a>
+    </div>
+</main>
+</body>
+</html>
