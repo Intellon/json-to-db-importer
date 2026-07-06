@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON-Importer · Dateien &amp; Keys</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<main>
+    <h1>JSON → DB Importer</h1>
+    <nav th:replace="~{fragments :: steps(2)}"></nav>
+
+    <div class="msg error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/files/scan}" method="post" class="card">
+        <label>Ordner mit .json-Files (wird rekursiv durchsucht)
+            <input type="text" name="folder" th:value="${folder}" style="width: 560px" placeholder="z.B. D:\daten\json">
+        </label>
+        <div class="actions">
+            <button type="submit">Scannen</button>
+        </div>
+    </form>
+
+    <form th:if="${files != null and !files.isEmpty()}" th:action="@{/import}" method="post">
+        <table>
+            <thead>
+            <tr>
+                <th></th>
+                <th>Datei</th>
+                <th>Größe</th>
+                <th>Zieltabelle</th>
+                <th>JSON</th>
+                <th>Key</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="f, it : ${files}"
+                th:classappend="${issues != null and issues.containsKey(it.index)} ? 'row-error'">
+                <td>
+                    <input type="checkbox" name="selected" th:value="${it.index}"
+                           th:disabled="${!f.importable()}"
+                           th:checked="${f.importable() and (selectedIdx == null or selectedIdx.contains(it.index))}">
+                </td>
+                <td th:text="${f.relativePath()}"></td>
+                <td th:text="${f.sizeBytes()} + ' B'"></td>
+                <td th:text="${f.targetTable()}"></td>
+                <td>
+                    <span class="badge err" th:if="${f.readError()}">Lesefehler</span>
+                    <span class="badge warn" th:if="${!f.readError() and !f.validJson()}">ungültig</span>
+                    <span class="badge ok" th:if="${f.importable()}">gültig</span>
+                </td>
+                <td>
+                    <input type="text" th:name="'key-' + ${it.index}"
+                           th:value="${enteredKeys != null and enteredKeys.containsKey(it.index)} ? ${enteredKeys.get(it.index)} : ${f.defaultKey()}"
+                           th:disabled="${!f.importable()}" maxlength="450">
+                    <div class="field-error" th:if="${issues != null and issues.containsKey(it.index)}">
+                        <div th:each="msg : ${issues.get(it.index)}" th:text="${msg}"></div>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="actions">
+            <button type="submit">Import starten</button>
+            <span class="hint">Ungültige Files sind abgewählt und nicht importierbar.</span>
+        </div>
+    </form>
+
+    <p class="hint" th:if="${files != null and files.isEmpty()}">Keine .json-Files im angegebenen Ordner gefunden.</p>
+</main>
+</body>
+</html>
