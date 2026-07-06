@@ -29,10 +29,11 @@ Aus den Task-Reviews gesammelt; der finale Review hat sie alle als nicht merge-b
 - Sanitizer: kein Leerstring-Test · Scanner: Randfälle untestet (Datei statt Ordner, Root ohne Namen, Datei namens `.json`)
 - ImportValidator: kein 3-Wege-Konflikt- und kein null-Key-Test; Meldungstexte werden nicht geprüft
 - DialectRegistry: Unknown-Type-Zweig untestet · ImportService: Rollback nur indirekt asserted
-- ImportController: Guards (POST ohne Scan, /result ohne Verbindung) untestet · ConfigController: lastFolder-Erhalt-Zweig untestet
+- ImportController: Guards (POST ohne Scan, /result ohne Verbindung) untestet · ConfigController: lastFolder-Erhalt-Zweig untestet · ConnectionFactory: kein dedizierter Test (Verhalten indirekt über ImportService-Tests und ITs abgedeckt)
 
 **Kosmetik**
 - Ungenutzter Mockito-Import in `FilesControllerTest`; 4× Stream-Count statt `groupingBy` auf der Ergebnisseite; gemischter Stil `@RequestParam`/`getParameter`; Integrationstests ohne `@AfterAll`-Close und mit hartkodiertem Falsch-Passwort; `'|'`-Kompositschlüssel im ImportValidator verlässt sich implizit auf den Sanitizer
+- `JsonValidator`: fehlender Kommentar zum Second-Token-Mechanismus (warum das zweite `nextToken()` Trailing-Content erkennt); `ConfigPersistenceService.mapper` könnte `static final` sein, Import-Reihenfolge unüblich; `ImportService.importOne` hat 5 Parameter; `ConfigController`: `connectionTested`-Model-Attribut wird früh gesetzt und in den Zweigen überschrieben, `toDbConfig()` enthält einen toten Null-Check
 
 ## Nächster Schritt
 
