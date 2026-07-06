@@ -1,6 +1,6 @@
 # Projektstatus
 
-**Stand: 2026-07-06 — Phase 1 fertig und in `main` gemerged.**
+**Stand: 2026-07-06 — Phase 1 fertig, in `main` gemerged, Release 1.0.0.**
 
 Verifikation zum Merge-Zeitpunkt: 76/76 Unit-Tests und 7/7 Integrationstests gegen einen echten MSSQL-Container (`mvn verify -Pit`) grün; App als Fat-JAR gestartet und Routen-Smoke-Test bestanden. Jeder Implementierungs-Task wurde einzeln reviewt, der Gesamt-Branch abschließend aus vier Perspektiven (Integration, Security, Spec-Abdeckung, Test-Hygiene); alle dort bestätigten Fehler wurden behoben — bis auf die zwei bewusst offen gelassenen Punkte unten.
 
