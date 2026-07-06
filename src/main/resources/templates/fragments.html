@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="steps(active)" class="steps">
+    <span th:classappend="${active == 1} ? 'step active' : 'step'">1 · Verbindung</span>
+    <span th:classappend="${active == 2} ? 'step active' : 'step'">2 · Dateien &amp; Keys</span>
+    <span th:classappend="${active == 3} ? 'step active' : 'step'">3 · Import</span>
+</nav>
+</body>
+</html>

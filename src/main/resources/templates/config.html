@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON-Importer · Verbindung</title>
+    <link rel="stylesheet" th:href="@{/style.css}">
+</head>
+<body>
+<main>
+    <h1>JSON → DB Importer</h1>
+    <nav th:replace="~{fragments :: steps(1)}"></nav>
+
+    <div class="msg success" th:if="${successMessage}" th:text="${successMessage}"></div>
+    <div class="msg error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+    <form th:action="@{/config/test}" th:object="${form}" method="post" class="card">
+        <label>DB-Typ
+            <select th:field="*{dbType}">
+                <option th:each="t : ${dbTypes}" th:value="${t}" th:text="${t}"></option>
+            </select>
+        </label>
+        <label>Host
+            <input type="text" th:field="*{host}" placeholder="z.B. localhost">
+            <span class="field-error" th:if="${#fields.hasErrors('host')}" th:errors="*{host}"></span>
+        </label>
+        <label>Port
+            <input type="number" th:field="*{port}">
+            <span class="field-error" th:if="${#fields.hasErrors('port')}" th:errors="*{port}"></span>
+        </label>
+        <label>DB-Name
+            <input type="text" th:field="*{database}">
+            <span class="field-error" th:if="${#fields.hasErrors('database')}" th:errors="*{database}"></span>
+        </label>
+        <label>User
+            <input type="text" th:field="*{username}">
+            <span class="field-error" th:if="${#fields.hasErrors('username')}" th:errors="*{username}"></span>
+        </label>
+        <label>Passwort
+            <input type="password" th:field="*{password}">
+        </label>
+        <div class="actions">
+            <button type="submit">Verbindung testen</button>
+            <a class="button" th:if="${connectionTested}" th:href="@{/files}">Weiter zu Schritt 2 →</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

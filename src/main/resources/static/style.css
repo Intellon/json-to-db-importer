@@ -1,0 +1,26 @@
+:root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #1c2430; }
+body { margin: 0; background: #f4f6f9; }
+main { max-width: 1000px; margin: 2rem auto; padding: 0 1rem; }
+h1 { font-size: 1.4rem; }
+.steps { display: flex; gap: .5rem; margin: 1rem 0 1.5rem; }
+.step { padding: .4rem .8rem; border-radius: 999px; background: #e2e7ee; font-size: .9rem; }
+.step.active { background: #2456a6; color: #fff; }
+.card { background: #fff; border: 1px solid #dde3ea; border-radius: 8px; padding: 1.25rem; }
+label { display: block; margin-bottom: .75rem; font-size: .9rem; }
+input, select { display: block; width: 320px; max-width: 100%; padding: .45rem .6rem; margin-top: .25rem;
+    border: 1px solid #c4ccd6; border-radius: 6px; font-size: 1rem; }
+button, .button { display: inline-block; padding: .5rem 1rem; border: 0; border-radius: 6px; cursor: pointer;
+    background: #2456a6; color: #fff; font-size: .95rem; text-decoration: none; }
+.actions { display: flex; gap: .75rem; margin-top: 1rem; align-items: center; }
+.msg { padding: .6rem .9rem; border-radius: 6px; margin-bottom: 1rem; }
+.msg.success { background: #e2f4e5; color: #1c6b2a; }
+.msg.error { background: #fbe4e4; color: #9c1f1f; }
+.field-error { color: #9c1f1f; font-size: .85rem; }
+table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dde3ea; border-radius: 8px; }
+th, td { text-align: left; padding: .5rem .65rem; border-bottom: 1px solid #e7ebf0; font-size: .9rem; }
+tr.row-error { background: #fff4f4; }
+.badge { padding: .15rem .5rem; border-radius: 999px; font-size: .8rem; }
+.badge.ok { background: #e2f4e5; color: #1c6b2a; }
+.badge.warn { background: #fdf0dc; color: #8a5a00; }
+.badge.err { background: #fbe4e4; color: #9c1f1f; }
+.hint { color: #5b6675; font-size: .85rem; }
