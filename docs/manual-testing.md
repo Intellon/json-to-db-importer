@@ -22,6 +22,8 @@ Einen Ordner mit ein paar JSON-Dateien in Unterordnern erstellen, z.B.:
 
 ```
 D:\testdaten\
+├── 01_Login\
+│   └── session.json         {"logins": [{"user": "sa", "erfolgreich": true}]}
 ├── kunden\
 │   ├── adressen.json        {"kunden": [{"name": "Müller", "ort": "Zürich"}]}
 │   └── vertraege.json       {"vertraege": [{"nr": 1, "aktiv": true}]}
@@ -29,7 +31,9 @@ D:\testdaten\
     └── katalog.json         [{"artikel": "A-100", "preis": 9.90}]
 ```
 
-Der Unterordnername wird zum Tabellennamen, der Dateiname zum Key-Vorschlag.
+Genau dieser Ordner liegt als `testdaten/` im Repo und kann direkt verwendet werden.
+
+Der Unterordnername wird zum Tabellennamen, der Dateiname zum Key-Vorschlag. `01_Login` ist bewusst dabei: Ordner mit führender Ziffer müssen unverändert als Tabelle `01_Login` ankommen (früher wurde daraus `t_01_Login`).
 
 ## 3. App starten
 
@@ -54,9 +58,9 @@ Browser: **http://127.0.0.1:8080**
 
 „Verbindung testen" → grüne Erfolgsmeldung → „Weiter zu Schritt 2".
 
-**Schritt 2 — Dateien & Keys:** Ordner `D:\testdaten` eintragen → „Scannen". Erwartung: 3 Dateien, Zieltabellen `kunden` und `produkte`, Keys vorbelegt (`adressen`, `vertraege`, `katalog`), alle „gültig".
+**Schritt 2 — Dateien & Keys:** Ordner `D:\testdaten` eintragen → „Scannen". Erwartung: 4 Dateien, Zieltabellen `01_Login`, `kunden` und `produkte`, Keys vorbelegt (`session`, `adressen`, `vertraege`, `katalog`), alle „gültig".
 
-**Schritt 3 — Import:** „Import starten". Erwartung: 3 × **neu angelegt**.
+**Schritt 3 — Import:** „Import starten". Erwartung: 4 × **neu angelegt**.
 
 ## 5. Ergebnis in der Datenbank prüfen
 
@@ -65,6 +69,12 @@ docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Tes
 ```
 
 Erwartung: zwei Zeilen (`adressen`, `vertraege`) mit dem unveränderten JSON als Inhalt. Alternativ per SSMS/Azure Data Studio auf `localhost,1433` verbinden.
+
+Und die Gegenprobe für den Ordner mit führender Ziffer — die Tabelle muss exakt `01_Login` heißen:
+
+```bash
+docker exec mssql-local /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test!Passw0rd' -C -d importer_test -Q "SELECT name FROM sys.tables ORDER BY name"
+```
 
 ## 6. Upsert testen (optional, lohnt sich)
 
@@ -86,4 +96,4 @@ App mit `Ctrl+C` beenden. Die gemerkten Verbindungsdaten liegen in `~/.json-to-d
 
 ---
 
-**Automatisierte Alternative:** `mvn verify -Pit` macht das alles ohne Klicken — startet selbst einen MSSQL-Container und testet Verbindung, Tabellenanlage, Upsert und Inhaltstreue (7 Integrationstests).
+**Automatisierte Alternative:** `mvn verify -Pit` macht das alles ohne Klicken — startet selbst einen MSSQL-Container und testet Verbindung, Tabellenanlage (auch mit führender Ziffer), Upsert und Inhaltstreue (8 Integrationstests).

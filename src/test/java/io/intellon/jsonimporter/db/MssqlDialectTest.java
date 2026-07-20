@@ -38,6 +38,17 @@ class MssqlDialectTest {
     }
 
     @Test
+    void bracketsTableNamesThatStartWithADigit() {
+        // Ohne Klammern wäre 01_Login kein gültiger T-SQL-Bezeichner — die Klammern
+        // sind der Grund, warum der Sanitizer kein 't_'-Präfix mehr braucht.
+        assertThat(dialect.buildCreateTableSql("01_Login"))
+                .contains("IF OBJECT_ID(N'[01_Login]', N'U') IS NULL")
+                .contains("CREATE TABLE [01_Login]");
+        assertThat(dialect.buildMergeSql("01_Login"))
+                .contains("MERGE [01_Login] WITH (HOLDLOCK) AS target");
+    }
+
+    @Test
     void reportsMssqlType() {
         assertThat(dialect.type()).isEqualTo(DbType.MSSQL);
     }

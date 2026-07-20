@@ -31,7 +31,7 @@ Die Tabelle zeigt pro Datei:
 | Checkbox | Datei für den Import an-/abwählen |
 | Datei | Pfad relativ zum gescannten Ordner |
 | Größe | Dateigröße in Bytes |
-| Zieltabelle | Abgeleitet aus dem **direkten Elternordner** der Datei; Dateien direkt im gescannten Ordner nutzen dessen Namen. Sonderzeichen werden zu `_` bereinigt (z.B. `2024-daten` → `t_2024_daten`) — angezeigt wird der endgültige Tabellenname |
+| Zieltabelle | Abgeleitet aus dem **direkten Elternordner** der Datei; Dateien direkt im gescannten Ordner nutzen dessen Namen. Sonderzeichen werden zu `_` bereinigt (z.B. `2024-daten` → `2024_daten`), Groß-/Kleinschreibung und führende Ziffern bleiben erhalten (`01_Login` → `01_Login`) — angezeigt wird der endgültige Tabellenname |
 | JSON | **gültig** / **ungültig** (kein korrektes JSON-Dokument) / **Lesefehler** (Datei nicht lesbar, z.B. falsche Kodierung) |
 | Key | Vorbelegt mit dem Dateinamen ohne `.json`, frei änderbar |
 
@@ -74,6 +74,12 @@ Abfragebeispiel:
 SELECT file_key, imported_at FROM [folderxxx];
 SELECT content FROM [folderxxx] WHERE file_key = 'file_xyz';
 ```
+
+> **Geändert nach 1.0.0:** Tabellennamen, die mit einer Ziffer beginnen, bekamen früher ein `t_`
+> davor (`01_Login` → `t_01_Login`). Das ist entfallen, die Tabelle heißt jetzt wie der Ordner.
+> Mit 1.0.0 importierte Daten liegen weiterhin in der alten `t_`-Tabelle; der nächste Import legt
+> daneben die neue Tabelle an. Falls die alten Daten weiter genutzt werden sollen, die alte Tabelle
+> vorher umbenennen: `EXEC sp_rename 't_01_Login', '01_Login';`
 
 ## Fehlerbehebung
 

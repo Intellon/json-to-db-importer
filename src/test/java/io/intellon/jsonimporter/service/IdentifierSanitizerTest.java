@@ -5,6 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IdentifierSanitizerTest {
 
@@ -15,11 +16,25 @@ class IdentifierSanitizerTest {
             "Kunden Daten,  Kunden_Daten",
             "über.ordner,   _ber_ordner",
             "a_b_c,         a_b_c",
-            "2024-data,     t_2024_data",
             "'...',         ___",
     })
     void appliesSanitizingRules(String raw, String expected) {
         assertThat(IdentifierSanitizer.sanitize(raw)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "01_Login,      01_Login",
+            "2024-data,     2024_data",
+            "9,             9",
+    })
+    void keepsLeadingDigitsBecauseIdentifiersAreAlwaysBracketQuoted(String raw, String expected) {
+        assertThat(IdentifierSanitizer.sanitize(raw)).isEqualTo(expected);
+    }
+
+    @Test
+    void preservesCase() {
+        assertThat(IdentifierSanitizer.sanitize("01_Login")).isEqualTo("01_Login");
     }
 
     @Test
@@ -29,9 +44,23 @@ class IdentifierSanitizerTest {
     }
 
     @Test
-    void prefixThenTruncateStaysWithin128() {
+    void truncatesDigitLeadingNameToo() {
         String raw = "9" + "x".repeat(200);
         String result = IdentifierSanitizer.sanitize(raw);
-        assertThat(result).startsWith("t_9").hasSize(128);
+        assertThat(result).startsWith("9x").hasSize(128);
+    }
+
+    @Test
+    void rejectsNull() {
+        assertThatThrownBy(() -> IdentifierSanitizer.sanitize(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("leer");
+    }
+
+    @Test
+    void rejectsEmptyStringBecauseItWouldProduceAnUnusableIdentifier() {
+        assertThatThrownBy(() -> IdentifierSanitizer.sanitize(""))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("leer");
     }
 }

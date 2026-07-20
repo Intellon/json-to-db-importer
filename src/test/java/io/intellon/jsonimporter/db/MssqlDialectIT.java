@@ -2,6 +2,8 @@ package io.intellon.jsonimporter.db;
 
 import io.intellon.jsonimporter.model.DbConfig;
 import io.intellon.jsonimporter.model.DbType;
+import io.intellon.jsonimporter.service.IdentifierSanitizer;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -36,6 +38,12 @@ class MssqlDialectIT {
         jdbc = new JdbcTemplate(dataSource);
     }
 
+    @AfterAll
+    static void tearDown() {
+        // Die eine wiederverwendete Verbindung schließen, bevor der Container stoppt.
+        dataSource.destroy();
+    }
+
     @Test
     void testConnectionSucceedsWithValidCredentials() throws SQLException {
         dialect.testConnection(config);
@@ -43,8 +51,9 @@ class MssqlDialectIT {
 
     @Test
     void testConnectionFailsWithWrongPassword() {
+        // Vom echten Passwort abgeleitet, damit es garantiert nicht zufällig stimmt.
         DbConfig wrong = new DbConfig(DbType.MSSQL, config.host(), config.port(),
-                config.database(), config.username(), "Wrong!Password123");
+                config.database(), config.username(), config.password() + "_falsch");
         assertThatThrownBy(() -> dialect.testConnection(wrong)).isInstanceOf(SQLException.class);
     }
 
@@ -86,10 +95,25 @@ class MssqlDialectIT {
 
     @Test
     void sanitizedTableNamesWork() {
-        String table = io.intellon.jsonimporter.service.IdentifierSanitizer.sanitize("2024-kunden daten");
-        assertThat(table).isEqualTo("t_2024_kunden_daten");
+        String table = IdentifierSanitizer.sanitize("2024-kunden daten");
+        assertThat(table).isEqualTo("2024_kunden_daten");
         dialect.createTableIfNotExists(jdbc, table);
         assertThat(dialect.upsert(jdbc, table, "k", "[]")).isEqualTo(UpsertOutcome.INSERTED);
+    }
+
+    @Test
+    void tableNameStartingWithADigitIsCreatedUnderTheFolderName() {
+        // Beweis gegen echtes MSSQL, dass das frühere 't_'-Präfix überflüssig war:
+        // als [01_Login] geklammert ist der Bezeichner gültig.
+        String table = IdentifierSanitizer.sanitize("01_Login");
+        assertThat(table).isEqualTo("01_Login");
+
+        dialect.createTableIfNotExists(jdbc, table);
+        assertThat(dialect.upsert(jdbc, table, "k", "{\"a\":1}")).isEqualTo(UpsertOutcome.INSERTED);
+
+        String actualName = jdbc.queryForObject(
+                "SELECT name FROM sys.tables WHERE name = ?", String.class, "01_Login");
+        assertThat(actualName).isEqualTo("01_Login");
     }
 
     @Test
