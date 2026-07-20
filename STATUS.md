@@ -37,4 +37,10 @@ Aus den Task-Reviews gesammelt; der finale Review hat sie alle als nicht merge-b
 
 ## Nächster Schritt
 
-**Phase 2** (geplant, nicht gebaut): eingelesene JSONs analysieren, automatischen Mapping-Vorschlag generieren (verschachtelte Objekte/Listen → relationale Tabellen mit Fremdschlüsseln), Ausführung per OK/Upload. Andockpunkte sind in der Architektur vorbereitet (`SqlDialect` erweiterbar, Rohdaten liegen vollständig in der DB, zusätzlicher Wizard-Schritt zwischen Scan und Import vorgesehen).
+**Phase 2** (geplant, nicht gebaut): eingelesene JSONs analysieren, automatischen Mapping-Vorschlag generieren (verschachtelte Objekte/Listen → relationale Tabellen mit Fremdschlüsseln), Ausführung per OK/Upload.
+
+Andockpunkte (übernommen aus der inzwischen gelöschten Design-Spec §10):
+
+- Der Wizard erhält einen zusätzlichen Schritt zwischen Scan und Import: **„Mapping-Vorschlag"** — eingelesene JSONs werden präsentiert, das Tool generiert einen Entflechtungs-Vorschlag (verschachtelte Objekte/Listen → relationale Tabellen mit FK-Beziehungen), den der User per OK/Upload ausführt.
+- Dafür docken in `service/` ein `JsonAnalyzer` (Strukturanalyse) und ein `MappingProposal`-Modell an; `SqlDialect` erhält zusätzliche DDL-Methoden.
+- Da Phase 1 den Roh-Inhalt vollständig in der DB ablegt, kann Phase 2 auch bereits importierte JSONs nachträglich analysieren.
