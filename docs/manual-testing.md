@@ -39,7 +39,7 @@ Der Unterordnername wird zum Tabellennamen, der Dateiname zum Key-Vorschlag. `01
 
 ```bash
 mvn -DskipTests package
-java -jar target/json-to-db-importer-1.0.0.jar
+java -jar target/json-to-db-importer-1.1.0.jar
 ```
 
 Browser: **http://127.0.0.1:8080**

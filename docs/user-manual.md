@@ -5,7 +5,7 @@ Der Importer überträgt den Inhalt von `.json`-Dateien unverändert in MSSQL-Ta
 ## Starten
 
 ```bash
-java -jar json-to-db-importer-1.0.0.jar
+java -jar json-to-db-importer-1.1.0.jar
 ```
 
 Browser öffnen: **http://127.0.0.1:8080**. Die App läuft nur lokal (kein Zugriff von anderen Rechnern) und ist für eine Person gedacht — nicht in mehreren Tabs parallel bedienen.

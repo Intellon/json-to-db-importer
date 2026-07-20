@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>io.intellon</groupId>
 	<artifactId>json-to-db-importer</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<name>json-to-db-importer</name>
 	<description>Imports JSON files from a folder into MSSQL tables (raw key/value)</description>
 	<properties>

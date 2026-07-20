@@ -12,7 +12,7 @@ Lokale Web-App, die JSON-Files aus einem Ordner rekursiv einliest und ihren komp
 
 ```bash
 mvn -DskipTests package
-java -jar target/json-to-db-importer-1.0.0.jar
+java -jar target/json-to-db-importer-1.1.0.jar
 ```
 
 Danach im Browser: **http://127.0.0.1:8080** — die App bindet ausschließlich an localhost.
