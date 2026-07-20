@@ -42,4 +42,10 @@ class JsonValidatorTest {
     void rejectsNull() {
         assertThat(JsonValidator.isValid(null)).isFalse();
     }
+
+    @Test
+    void rejectsPathologicallyDeepNestingWithoutBlowingTheStack() {
+        String deep = "[".repeat(50_000) + "]".repeat(50_000);
+        assertThat(JsonValidator.isValid(deep)).isFalse();
+    }
 }

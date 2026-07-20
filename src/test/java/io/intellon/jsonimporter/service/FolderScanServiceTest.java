@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -96,5 +97,31 @@ class FolderScanServiceTest {
     void rejectsMissingFolder() {
         assertThatThrownBy(() -> service.scan(root.resolve("does-not-exist")))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void rejectsFilePassedInsteadOfFolder() {
+        assertThatThrownBy(() -> service.scan(root.resolve("direct.json")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ordner existiert nicht");
+    }
+
+    @Test
+    void filesystemRootWithoutNameFallsBackToRootTableName() {
+        assertThat(FolderScanService.targetTableFor(Path.of(File.separator))).isEqualTo("root");
+    }
+
+    @Test
+    void fileNamedOnlyDotJsonGetsEmptyDefaultKey() throws IOException {
+        Path sub = Files.createDirectories(root.resolve("edge"));
+        Files.writeString(sub.resolve(".json"), "{\"a\":1}");
+
+        List<ScannedFile> files = service.scan(root);
+
+        ScannedFile f = find(files, "/.json");
+        assertThat(f.defaultKey()).isEmpty();
+        assertThat(f.targetTable()).isEqualTo("edge");
+        // Leerer Key wird erst beim Import geblockt (ImportValidator), nicht beim Scan.
+        assertThat(f.importable()).isTrue();
     }
 }

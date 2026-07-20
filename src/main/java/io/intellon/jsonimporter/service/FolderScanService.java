@@ -31,11 +31,19 @@ public class FolderScanService {
         }
     }
 
+    /**
+     * A filesystem root ({@code D:\}, {@code /}) has no file name — such a folder
+     * falls back to the fixed table name "root".
+     */
+    static String targetTableFor(Path folder) {
+        Path folderName = folder.getFileName();
+        return IdentifierSanitizer.sanitize(folderName == null ? "root" : folderName.toString());
+    }
+
     private ScannedFile toScannedFile(Path root, Path file) {
         Path parent = file.getParent();
         Path folder = parent.equals(root) ? root : parent;
-        Path folderName = folder.getFileName();
-        String targetTable = IdentifierSanitizer.sanitize(folderName == null ? "root" : folderName.toString());
+        String targetTable = targetTableFor(folder);
 
         String fileName = file.getFileName().toString();
         String defaultKey = fileName.substring(0, fileName.length() - EXTENSION.length());

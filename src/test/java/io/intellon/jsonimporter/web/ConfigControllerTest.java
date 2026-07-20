@@ -3,6 +3,7 @@ package io.intellon.jsonimporter.web;
 import io.intellon.jsonimporter.db.DialectRegistry;
 import io.intellon.jsonimporter.db.SqlDialect;
 import io.intellon.jsonimporter.model.AppSettings;
+import io.intellon.jsonimporter.model.DbConfig;
 import io.intellon.jsonimporter.model.DbType;
 import io.intellon.jsonimporter.service.ConfigPersistenceService;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +76,7 @@ class ConfigControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Verbindung erfolgreich")));
         verify(dialect).testConnection(any());
-        verify(persistence).save(new AppSettings("MSSQL", "dbhost", 1433, "mydb", "sa", null));
+        verify(persistence).saveConnection(new DbConfig(DbType.MSSQL, "dbhost", 1433, "mydb", "sa", "secret"));
     }
 
     @Test

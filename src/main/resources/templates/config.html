@@ -18,6 +18,7 @@
             <select th:field="*{dbType}">
                 <option th:each="t : ${dbTypes}" th:value="${t}" th:text="${t}"></option>
             </select>
+            <span class="field-error" th:if="${#fields.hasErrors('dbType')}" th:errors="*{dbType}"></span>
         </label>
         <label>Host
             <input type="text" th:field="*{host}" placeholder="z.B. localhost">

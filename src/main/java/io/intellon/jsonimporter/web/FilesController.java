@@ -54,17 +54,15 @@ public class FilesController {
             wizardState.setScannedFiles(scanService.scan(Path.of(folder.trim())));
             wizardState.setResults(null);
             wizardState.setFolder(folder);
-            persistence.load().ifPresentOrElse(
-                    s -> persistence.save(new AppSettings(s.dbType(), s.host(), s.port(), s.database(), s.username(), folder)),
-                    () -> {
-                        var config = wizardState.getDbConfig();
-                        persistence.save(new AppSettings(config.dbType().name(), config.host(), config.port(),
-                                config.database(), config.username(), folder));
-                    });
         } catch (Exception e) {
             model.addAttribute("errorMessage",
                     e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+            model.addAttribute("files", wizardState.getScannedFiles());
+            return "files";
         }
+        // Erst nach erfolgreichem Scan und außerhalb dessen try/catch: ein Schreibfehler
+        // hier ist kein Scan-Fehler (er wird im Service geloggt und bricht nichts ab).
+        persistence.saveLastFolder(folder, wizardState.getDbConfig());
         model.addAttribute("files", wizardState.getScannedFiles());
         return "files";
     }

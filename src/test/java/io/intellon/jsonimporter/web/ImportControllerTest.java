@@ -127,6 +127,25 @@ class ImportControllerTest {
     }
 
     @Test
+    void resultWithoutTestedConnectionRedirectsToConfig() throws Exception {
+        mvc.perform(get("/result")).andExpect(redirectedUrl("/config"));
+    }
+
+    @Test
+    void importWithoutScanRedirectsToFiles() throws Exception {
+        // Frische Session: Verbindung getestet, aber noch kein Scan gelaufen.
+        MockHttpSession freshSession = new MockHttpSession();
+        mvc.perform(post("/config/test").session(freshSession)
+                        .param("dbType", "MSSQL").param("host", "h").param("port", "1433")
+                        .param("database", "d").param("username", "u").param("password", "p"))
+                .andExpect(status().isOk());
+
+        mvc.perform(post("/import").session(freshSession).param("selected", "0"))
+                .andExpect(redirectedUrl("/files"));
+        verify(importService, never()).run(any(), any());
+    }
+
+    @Test
     void resultPageListsAllScannedFilesIncludingSkippedOnes() throws Exception {
         // Drittes File (ungültiges JSON) zum bereits gescannten Ordner hinzufügen und neu scannen,
         // damit wir a.json (ausgewählt), b.json (abgewählt) und c_invalid.json (ungültig) haben.

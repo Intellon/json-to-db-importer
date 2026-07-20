@@ -128,6 +128,35 @@ class ImportServiceTest {
     }
 
     @Test
+    void reportsUnexpectedUpsertOutcomeAsErrorInsteadOfUpdated() throws IOException {
+        when(dialect.upsert(any(), eq("t1"), eq("a"), anyString())).thenReturn(null);
+
+        List<ImportResult> results = service.run(config, List.of(
+                itemFor("a.json", "{\"a\":1}", "t1", "a")));
+
+        assertThat(results).singleElement().satisfies(r -> {
+            assertThat(r.status()).isEqualTo(ImportStatus.ERROR);
+            assertThat(r.message()).contains("Upsert");
+        });
+    }
+
+    @Test
+    void commitsEachFileSeparatelyAndRollsBackOnlyTheFailingOne() throws IOException, SQLException {
+        when(dialect.upsert(any(), eq("t1"), eq("ok1"), anyString())).thenReturn(UpsertOutcome.INSERTED);
+        when(dialect.upsert(any(), eq("t1"), eq("bad"), anyString()))
+                .thenThrow(new RuntimeException("Deadlock"));
+        when(dialect.upsert(any(), eq("t1"), eq("ok2"), anyString())).thenReturn(UpsertOutcome.INSERTED);
+
+        service.run(config, List.of(
+                itemFor("ok1.json", "{\"a\":1}", "t1", "ok1"),
+                itemFor("bad.json", "{\"b\":2}", "t1", "bad"),
+                itemFor("ok2.json", "{\"c\":3}", "t1", "ok2")));
+
+        verify(connection, times(2)).commit();
+        verify(connection, times(1)).rollback();
+    }
+
+    @Test
     void trimsKeysBeforeUpsert() throws IOException {
         when(dialect.upsert(any(), eq("t1"), eq("a"), anyString())).thenReturn(UpsertOutcome.INSERTED);
         List<ImportResult> results = service.run(config, List.of(

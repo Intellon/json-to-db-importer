@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 public class DbConfigForm {
 
-    @NotNull
+    @NotNull(message = "DB-Typ darf nicht leer sein")
     private DbType dbType = DbType.MSSQL;
 
     @NotBlank(message = "Host darf nicht leer sein")
@@ -29,7 +29,7 @@ public class DbConfigForm {
     private String password = "";
 
     public DbConfig toDbConfig() {
-        return new DbConfig(dbType, host, port, database, username, password == null ? "" : password);
+        return new DbConfig(dbType, host, port, database, username, password);
     }
 
     public DbType getDbType() {
@@ -76,7 +76,8 @@ public class DbConfigForm {
         return password;
     }
 
+    /** Keeps the empty-string invariant in one place: the field is never null. */
     public void setPassword(String password) {
-        this.password = password;
+        this.password = password == null ? "" : password;
     }
 }

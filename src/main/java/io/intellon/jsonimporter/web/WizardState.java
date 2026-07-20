@@ -26,16 +26,26 @@ public class WizardState {
         return dbConfig;
     }
 
-    public void setDbConfig(DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
-    }
-
     public boolean isConnectionTested() {
         return connectionTested;
     }
 
-    public void setConnectionTested(boolean connectionTested) {
-        this.connectionTested = connectionTested;
+    /**
+     * Config and flag only ever move together: every later step reads the config
+     * on the assumption that {@code connectionTested} vouches for it. Separate
+     * setters made it possible to store one without the other.
+     */
+    public void markConnectionTested(DbConfig testedConfig) {
+        this.dbConfig = testedConfig;
+        this.connectionTested = true;
+    }
+
+    /**
+     * Invalidates the connection. The config itself is kept on purpose, so the
+     * form on /config can be pre-filled with the values that just failed.
+     */
+    public void markConnectionUntested() {
+        this.connectionTested = false;
     }
 
     public String getFolder() {

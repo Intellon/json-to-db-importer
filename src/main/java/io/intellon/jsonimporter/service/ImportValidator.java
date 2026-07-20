@@ -18,9 +18,16 @@ public final class ImportValidator {
     private ImportValidator() {
     }
 
+    /**
+     * Identity of a target row. A record instead of a concatenated string, so no
+     * separator character can ever collide with a table name or key.
+     */
+    private record RowKey(String table, String normalizedKey) {
+    }
+
     public static Map<Integer, List<String>> validate(List<ImportItem> items) {
         Map<Integer, List<String>> issues = new HashMap<>();
-        Map<String, Integer> firstIndexByTableAndKey = new HashMap<>();
+        Map<RowKey, Integer> firstIndexByTableAndKey = new HashMap<>();
 
         for (int i = 0; i < items.size(); i++) {
             ImportItem item = items.get(i);
@@ -29,8 +36,8 @@ public final class ImportValidator {
                 issues.computeIfAbsent(i, k -> new ArrayList<>()).add("Key darf nicht leer sein");
                 continue;
             }
-            String composite = item.targetTable() + "|" + key.toLowerCase(Locale.ROOT);
-            Integer first = firstIndexByTableAndKey.putIfAbsent(composite, i);
+            RowKey rowKey = new RowKey(item.targetTable(), key.toLowerCase(Locale.ROOT));
+            Integer first = firstIndexByTableAndKey.putIfAbsent(rowKey, i);
             if (first != null) {
                 String msg = "Key-Konflikt (case-insensitiv) in Tabelle [" + item.targetTable() + "]: '" + key + "'";
                 issues.computeIfAbsent(first, k -> new ArrayList<>()).add(msg);

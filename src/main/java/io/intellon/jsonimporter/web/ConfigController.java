@@ -1,7 +1,6 @@
 package io.intellon.jsonimporter.web;
 
 import io.intellon.jsonimporter.db.DialectRegistry;
-import io.intellon.jsonimporter.model.AppSettings;
 import io.intellon.jsonimporter.model.DbType;
 import io.intellon.jsonimporter.service.ConfigPersistenceService;
 import jakarta.validation.Valid;
@@ -11,6 +10,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+
+import java.sql.SQLException;
 
 @Controller
 public class ConfigController {
@@ -68,26 +69,25 @@ public class ConfigController {
     public String testConnection(@Valid @ModelAttribute("form") DbConfigForm form,
                                  BindingResult binding, Model model) {
         model.addAttribute("dbTypes", DbType.values());
-        model.addAttribute("connectionTested", wizardState.isConnectionTested());
         if (binding.hasErrors()) {
+            model.addAttribute("connectionTested", wizardState.isConnectionTested());
             return "config";
         }
         var config = form.toDbConfig();
         try {
+            // Nur SQLException heißt „Verbindung fehlgeschlagen“. Alles andere ist ein Bug
+            // im Tool und soll als Fehlerseite sichtbar werden, statt sich als Verbindungs-
+            // problem zu tarnen.
             dialectRegistry.forType(config.dbType()).testConnection(config);
-            wizardState.setDbConfig(config);
-            wizardState.setConnectionTested(true);
-            String lastFolder = persistence.load().map(AppSettings::lastFolder).orElse(null);
-            persistence.save(new AppSettings(config.dbType().name(), config.host(), config.port(),
-                    config.database(), config.username(), lastFolder));
+            wizardState.markConnectionTested(config);
+            persistence.saveConnection(config);
             model.addAttribute("successMessage", "Verbindung erfolgreich hergestellt.");
-            model.addAttribute("connectionTested", true);
-        } catch (Exception e) {
-            wizardState.setConnectionTested(false);
-            model.addAttribute("connectionTested", false);
+        } catch (SQLException e) {
+            wizardState.markConnectionUntested();
             model.addAttribute("errorMessage",
                     "Verbindung fehlgeschlagen: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()));
         }
+        model.addAttribute("connectionTested", wizardState.isConnectionTested());
         return "config";
     }
 }

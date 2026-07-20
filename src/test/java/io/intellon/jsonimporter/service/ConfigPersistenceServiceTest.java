@@ -1,6 +1,8 @@
 package io.intellon.jsonimporter.service;
 
 import io.intellon.jsonimporter.model.AppSettings;
+import io.intellon.jsonimporter.model.DbConfig;
+import io.intellon.jsonimporter.model.DbType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -39,6 +41,47 @@ class ConfigPersistenceServiceTest {
         Files.createDirectories(file.getParent());
         Files.writeString(file, "{not json");
         assertThat(service("corrupt.json").load()).isEmpty();
+    }
+
+    @Test
+    void saveConnectionKeepsAlreadyPersistedLastFolder() {
+        ConfigPersistenceService service = service("config.json");
+        service.save(new AppSettings("MSSQL", "alt", 1, "alt", "alt", "D:/data/json"));
+
+        service.saveConnection(new DbConfig(DbType.MSSQL, "neu", 1433, "neudb", "sa", "geheim"));
+
+        assertThat(service.load()).contains(
+                new AppSettings("MSSQL", "neu", 1433, "neudb", "sa", "D:/data/json"));
+    }
+
+    @Test
+    void saveConnectionNeverPersistsThePassword() {
+        ConfigPersistenceService service = service("config.json");
+        service.saveConnection(new DbConfig(DbType.MSSQL, "h", 1433, "d", "sa", "streng-geheim"));
+
+        Path file = dir.resolve("sub").resolve("config.json");
+        assertThat(file).content().doesNotContain("streng-geheim");
+    }
+
+    @Test
+    void saveLastFolderKeepsAlreadyPersistedConnectionFields() {
+        ConfigPersistenceService service = service("config.json");
+        service.save(new AppSettings("MSSQL", "dbhost", 1433, "mydb", "sa", "D:/alt"));
+
+        service.saveLastFolder("D:/neu", new DbConfig(DbType.MSSQL, "ignoriert", 9, "ignoriert", "ignoriert", "p"));
+
+        assertThat(service.load()).contains(
+                new AppSettings("MSSQL", "dbhost", 1433, "mydb", "sa", "D:/neu"));
+    }
+
+    @Test
+    void saveLastFolderFallsBackToTheTestedConnectionWithoutConfigFile() {
+        ConfigPersistenceService service = service("config.json");
+
+        service.saveLastFolder("D:/neu", new DbConfig(DbType.MSSQL, "dbhost", 1433, "mydb", "sa", "p"));
+
+        assertThat(service.load()).contains(
+                new AppSettings("MSSQL", "dbhost", 1433, "mydb", "sa", "D:/neu"));
     }
 
     @Test

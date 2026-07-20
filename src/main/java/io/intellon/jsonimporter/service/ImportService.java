@@ -41,12 +41,11 @@ public class ImportService {
         SqlDialect dialect = dialectRegistry.forType(config.dbType());
         DataSource dataSource = connectionFactory.create(config);
         try {
-            JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-            TransactionTemplate tx = new TransactionTemplate(new JdbcTransactionManager(dataSource));
+            Run run = new Run(dialect, new JdbcTemplate(dataSource),
+                    new TransactionTemplate(new JdbcTransactionManager(dataSource)), new HashSet<>());
             List<ImportResult> results = new ArrayList<>(items.size());
-            Set<String> tablesEnsured = new HashSet<>();
             for (ImportItem item : items) {
-                results.add(importOne(dialect, jdbc, tx, item, tablesEnsured));
+                results.add(importOne(run, item));
             }
             return results;
         } finally {
@@ -56,8 +55,11 @@ public class ImportService {
         }
     }
 
-    private ImportResult importOne(SqlDialect dialect, JdbcTemplate jdbc, TransactionTemplate tx, ImportItem item,
-            Set<String> tablesEnsured) {
+    /** Everything that stays constant across the files of one import run. */
+    private record Run(SqlDialect dialect, JdbcTemplate jdbc, TransactionTemplate tx, Set<String> tablesEnsured) {
+    }
+
+    private ImportResult importOne(Run run, ImportItem item) {
         String key = item.fileKey() == null ? "" : item.fileKey().trim();
         try {
             String content = JsonFileReader.read(Path.of(item.absolutePath()));
@@ -65,14 +67,20 @@ public class ImportService {
                 return new ImportResult(item.relativePath(), item.targetTable(), key,
                         ImportStatus.SKIPPED, "Dateiinhalt ist kein gültiges JSON (ungültig)");
             }
-            UpsertOutcome outcome = tx.execute(status -> {
-                if (!tablesEnsured.contains(item.targetTable())) {
-                    dialect.createTableIfNotExists(jdbc, item.targetTable());
+            UpsertOutcome outcome = run.tx().execute(status -> {
+                if (!run.tablesEnsured().contains(item.targetTable())) {
+                    run.dialect().createTableIfNotExists(run.jdbc(), item.targetTable());
                 }
-                return dialect.upsert(jdbc, item.targetTable(), key, content);
+                return run.dialect().upsert(run.jdbc(), item.targetTable(), key, content);
             });
-            tablesEnsured.add(item.targetTable());
-            ImportStatus resultStatus = outcome == UpsertOutcome.INSERTED ? ImportStatus.INSERTED : ImportStatus.UPDATED;
+            run.tablesEnsured().add(item.targetTable());
+            // Anything but a known outcome means the dialect misbehaved — reporting it as
+            // "aktualisiert" would claim a write that may never have happened.
+            ImportStatus resultStatus = switch (outcome) {
+                case INSERTED -> ImportStatus.INSERTED;
+                case UPDATED -> ImportStatus.UPDATED;
+                case null -> throw new IllegalStateException("Upsert lieferte kein Ergebnis zurück");
+            };
             return new ImportResult(item.relativePath(), item.targetTable(), key, resultStatus, "");
         } catch (Exception e) {
             return new ImportResult(item.relativePath(), item.targetTable(), key,

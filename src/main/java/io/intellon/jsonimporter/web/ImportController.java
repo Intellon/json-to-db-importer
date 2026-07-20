@@ -6,7 +6,6 @@ import io.intellon.jsonimporter.model.ImportStatus;
 import io.intellon.jsonimporter.model.ScannedFile;
 import io.intellon.jsonimporter.service.ImportService;
 import io.intellon.jsonimporter.service.ImportValidator;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +18,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller
 public class ImportController {
@@ -33,7 +33,7 @@ public class ImportController {
 
     @PostMapping("/import")
     public String runImport(@RequestParam(name = "selected", required = false) List<Integer> selected,
-                            HttpServletRequest request, Model model) {
+                            @RequestParam Map<String, String> allParams, Model model) {
         if (!wizardState.isConnectionTested()) {
             return "redirect:/config";
         }
@@ -46,7 +46,7 @@ public class ImportController {
         // Eingetippte Keys aller Zeilen einsammeln (auch nicht angewählte, für Re-Render)
         Map<Integer, String> enteredKeys = new HashMap<>();
         for (int i = 0; i < files.size(); i++) {
-            String value = request.getParameter("key-" + i);
+            String value = allParams.get("key-" + i);
             if (value != null) {
                 enteredKeys.put(i, value);
             }
@@ -114,11 +114,13 @@ public class ImportController {
             return "redirect:/files";
         }
         var results = wizardState.getResults();
+        Map<ImportStatus, Long> countByStatus = results.stream()
+                .collect(Collectors.groupingBy(ImportResult::status, Collectors.counting()));
         model.addAttribute("results", results);
-        model.addAttribute("countInserted", results.stream().filter(r -> r.status() == ImportStatus.INSERTED).count());
-        model.addAttribute("countUpdated", results.stream().filter(r -> r.status() == ImportStatus.UPDATED).count());
-        model.addAttribute("countSkipped", results.stream().filter(r -> r.status() == ImportStatus.SKIPPED).count());
-        model.addAttribute("countError", results.stream().filter(r -> r.status() == ImportStatus.ERROR).count());
+        model.addAttribute("countInserted", countByStatus.getOrDefault(ImportStatus.INSERTED, 0L));
+        model.addAttribute("countUpdated", countByStatus.getOrDefault(ImportStatus.UPDATED, 0L));
+        model.addAttribute("countSkipped", countByStatus.getOrDefault(ImportStatus.SKIPPED, 0L));
+        model.addAttribute("countError", countByStatus.getOrDefault(ImportStatus.ERROR, 0L));
         return "result";
     }
 }
